@@ -1,5 +1,6 @@
 import "@fontsource-variable/figtree";
 import "./style.css";
+import { inject } from "@vercel/analytics";
 import type { FeatureCollection } from "geojson";
 import { decodeCells } from "./data";
 import { createDrawer } from "./drawer";
@@ -105,6 +106,9 @@ function welcome(findings: Findings): HTMLElement {
   queueMicrotask(() => go.focus());
   return overlay;
 }
+
+// Page views only, no cookies. Does nothing until Web Analytics is enabled for the project on Vercel.
+inject();
 
 const app = document.querySelector<HTMLElement>("#app");
 if (app) {
