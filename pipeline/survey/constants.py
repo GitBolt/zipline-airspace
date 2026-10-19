@@ -1,6 +1,7 @@
-"""Fixed definitions for the DFW low-altitude surveillance survey.
+"""Fixed definitions for the low-altitude surveillance survey.
 
 Thresholds below are pre-committed. They are not tuned after looking at results.
+They are the same for every metro; what differs between metros is in survey.metros.
 """
 
 from __future__ import annotations
@@ -17,16 +18,6 @@ STUDY_DATES = [
 
 REPLAY_DATE = "2026-09-29"
 TIMEZONE = "America/Chicago"
-
-# Printed NE corner longitude is missing its decimal point.
-CORNERS_LONLAT = [
-    (-97.976603, 33.502972),
-    (-97.976692, 32.178781),
-    (-95.923964, 32.179006),
-    (-95.924358, 33.502911),
-]
-STATED_AREA_SQ_MI = 10904.0
-LONGITUDE_CORRECTION = "The printed NE longitude -95924358 is read as -95.924358."
 
 BBOX_PAD_DEG = 0.15
 
@@ -94,18 +85,4 @@ HELI_TYPES = {
     "S92", "H60", "AS50", "AS55", "AS65", "AS32", "H500", "H269", "MD52",
     "MD60", "NOTR", "B206", "UH1", "UH1H", "GAZL", "ALOU", "EXPL", "LYNX",
     "NH90", "CABR",
-}
-
-METAR_STATIONS = [
-    "DFW", "DAL", "AFW", "ADS", "FTW", "DTO", "GKY", "TKI", "FWS", "RBD",
-    "LNC", "GPM", "HQZ", "GVT", "MWL", "SEP", "ACT", "NFW",
-]
-
-DEM_TILES = {
-    "n33w098": 54473476,
-    "n33w097": 53318809,
-    "n33w096": 56057619,
-    "n34w098": 54021363,
-    "n34w097": 52958494,
-    "n34w096": 53940902,
 }

@@ -25,7 +25,6 @@ from survey.zones import area_report
 CLASSES = ["rotorcraft", "light", "small", "large", "unknown", "other"]
 LINKS = ["adsb_1090", "uat_or_adsr", "tisb_only", "mlat_only"]
 MISS = ["tisb_only", "mlat_only"]
-DFW_LONLAT = (-97.0380, 32.8968)
 
 
 def _hours(seconds: float) -> float:
@@ -288,8 +287,11 @@ def _cells(low: pl.DataFrame, cruise: pl.DataFrame, records: dict, masks: dict) 
     return cells
 
 
-def compute(df: pl.DataFrame, areas: dict, dates: list[str], facilities: dict) -> tuple[dict, list[dict]]:
-    """`facilities` holds `airports` and `heliports` GeoJSON features and `runway_ends`."""
+def compute(df: pl.DataFrame, areas: dict, dates: list[str], facilities: dict, hub: tuple[float, float]) -> tuple[dict, list[dict]]:
+    """`facilities` holds `airports` and `heliports` GeoJSON features and `runway_ends`.
+
+    `hub` is the (lon, lat) of the airport that reception distances are measured from.
+    """
     masks = areas["masks"]
     window = window_hours(dates)
     q1_area = area_report(masks)
@@ -312,7 +314,7 @@ def compute(df: pl.DataFrame, areas: dict, dates: list[str], facilities: dict) -
     }
     q2, records = cell_reception(df, cell_ids)
     in_area = [f for f in facilities["airports"] if masks["area"].covers(_point(f))]
-    q2["airports"] = airport_reception(df, in_area, facilities["runway_ends"], DFW_LONLAT)
+    q2["airports"] = airport_reception(df, in_area, facilities["runway_ends"], hub)
     q3 = {
         "cruise": _band_summary(cruise, window),
         "low": _band_summary(low, window),

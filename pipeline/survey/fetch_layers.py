@@ -1,7 +1,8 @@
-"""FAA layers, terrain tiles, METARs, and a GEOID18 grid."""
+"""FAA layers, terrain tiles, METARs, and a GEOID18 grid for one metro."""
 
 from __future__ import annotations
 
+import argparse
 import json
 import subprocess
 import urllib.parse
@@ -14,35 +15,17 @@ import numpy as np
 import polars as pl
 from shapely.geometry import LineString, Point, mapping, shape
 
-from survey.constants import (
-    BBOX_PAD_DEG,
-    CORNERS_LONLAT,
-    DEM_TILES,
-    LONGITUDE_CORRECTION,
-    METAR_STATIONS,
-    STUDY_DATES,
-)
+from survey.constants import STUDY_DATES
 from survey.geometry import as_feature, feature_collection, operating_polygon
+from survey.metros import METROS, Metro, get
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data"
-LAYERS = DATA / "layers"
 TERRAIN = DATA / "terrain"
 NASR = DATA / "nasr"
 AIRSPACE_URL = "https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/arcgis/rest/services/Class_Airspace/FeatureServer/0/query"
 NASR_URL = "https://nfdc.faa.gov/webContent/28DaySub/extra/01_Oct_2026_APT_CSV.zip"
 UA = "dfw-low-altitude-survey/1.0 (public measurement; educational)"
-
-
-def bbox() -> tuple[float, float, float, float]:
-    lons = [c[0] for c in CORNERS_LONLAT]
-    lats = [c[1] for c in CORNERS_LONLAT]
-    return (
-        min(lons) - BBOX_PAD_DEG,
-        min(lats) - BBOX_PAD_DEG,
-        max(lons) + BBOX_PAD_DEG,
-        max(lats) + BBOX_PAD_DEG,
-    )
 
 
 def _get(url: str, timeout: int = 120) -> bytes:
@@ -51,9 +34,9 @@ def _get(url: str, timeout: int = 120) -> bytes:
         return resp.read()
 
 
-def ensure_dems() -> None:
+def ensure_dems(tiles: dict[str, int]) -> None:
     TERRAIN.mkdir(parents=True, exist_ok=True)
-    for name, size in DEM_TILES.items():
+    for name, size in tiles.items():
         path = TERRAIN / f"USGS_1_{name}.tif"
         if path.exists() and path.stat().st_size == size:
             continue
@@ -76,8 +59,8 @@ def ensure_nasr() -> Path:
     return zip_path
 
 
-def fetch_airspace() -> dict:
-    lon0, lat0, lon1, lat1 = bbox()
+def fetch_airspace(box: tuple[float, float, float, float]) -> dict:
+    lon0, lat0, lon1, lat1 = box
     features = []
     offset = 0
     while True:
@@ -110,8 +93,8 @@ def _read_csv(zip_path: Path, name: str) -> pl.DataFrame:
         return pl.read_csv(zf.read(name), infer_schema_length=10000)
 
 
-def build_facilities(zip_path: Path) -> tuple[dict, dict]:
-    lon0, lat0, lon1, lat1 = bbox()
+def build_facilities(zip_path: Path, box: tuple[float, float, float, float], layers: Path) -> tuple[dict, dict, dict]:
+    lon0, lat0, lon1, lat1 = box
     base = _read_csv(zip_path, "APT_BASE.csv").filter(
         (pl.col("LAT_DECIMAL") >= lat0)
         & (pl.col("LAT_DECIMAL") <= lat1)
@@ -178,11 +161,11 @@ def build_facilities(zip_path: Path) -> tuple[dict, dict]:
                 "id": row["ARPT_ID"],
             }
         )
-    (LAYERS / "runway_ends.json").write_text(json.dumps(runway_ends))
+    (layers / "runway_ends.json").write_text(json.dumps(runway_ends))
     return feature_collection(airports), feature_collection(heliports), feature_collection(runways)
 
 
-def fetch_metar() -> list[dict]:
+def fetch_metar(stations: tuple[str, ...]) -> list[dict]:
     start, end = STUDY_DATES[0], STUDY_DATES[-1]
     y1, m1, d1 = start.split("-")
     y2, m2, d2 = end.split("-")
@@ -203,7 +186,7 @@ def fetch_metar() -> list[dict]:
         ("direct", "no"),
         ("report_type", "3"),
     ]
-    for station in METAR_STATIONS:
+    for station in stations:
         params.append(("station", station))
     url = "https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?" + urllib.parse.urlencode(params)
     text = _get(url, timeout=180).decode("utf-8", "replace")
@@ -235,10 +218,12 @@ def fetch_metar() -> list[dict]:
     return rows
 
 
-def fetch_geoid() -> dict:
-    lat0, lon0, step = 32.0, -98.3, 0.2
-    lats = np.round(np.arange(lat0, 33.81, step), 4)
-    lons = np.round(np.arange(lon0, -95.59, step), 4)
+def fetch_geoid(box: tuple[float, float, float, float]) -> dict:
+    """GEOID18 heights on a 0.2 degree grid over `box`, (lat0, lat1, lon0, lon1), edges included."""
+    lat0, lat1, lon0, lon1 = box
+    step = 0.2
+    lats = np.round(np.arange(lat0, lat1 + step / 2, step), 4)
+    lons = np.round(np.arange(lon0, lon1 + step / 2, step), 4)
     jobs = [(float(lat), float(lon)) for lat in lats for lon in lons]
 
     def one(lat: float, lon: float) -> tuple[float, float, float]:
@@ -270,40 +255,46 @@ def fetch_geoid() -> dict:
         "lats": lats.tolist(),
         "lons": lons.tolist(),
         "grid": grid,
-        "sample_dfw_m": values.get((32.8, -97.0)),
     }
 
 
-def write_operating_area() -> None:
-    poly = operating_polygon()
-    doc = feature_collection(
-        [as_feature(poly, {"name": "DFW operating area", "note": LONGITUDE_CORRECTION})]
-    )
-    (LAYERS / "operating_area.geojson").write_text(json.dumps(doc))
+def write_operating_area(metro: Metro) -> None:
+    poly = operating_polygon(metro)
+    doc = feature_collection([as_feature(poly, {"name": metro.area_label, "note": metro.boundary_note})])
+    (metro.layers_dir / "operating_area.geojson").write_text(json.dumps(doc))
+
+
+def fetch_all(metro: Metro) -> None:
+    layers = metro.layers_dir
+    layers.mkdir(parents=True, exist_ok=True)
+    box = metro.bbox()
+    ensure_dems(metro.dem_tiles)
+    write_operating_area(metro)
+    airspace_path = layers / "class_airspace.geojson"
+    if not airspace_path.exists():
+        airspace_path.write_text(json.dumps(fetch_airspace(box)))
+    zip_path = ensure_nasr()
+    airports, heliports, runways = build_facilities(zip_path, box, layers)
+    (layers / "airports.geojson").write_text(json.dumps(airports))
+    (layers / "heliports.geojson").write_text(json.dumps(heliports))
+    (layers / "runways.geojson").write_text(json.dumps(runways))
+    print(f"airports {len(airports['features'])} heliports {len(heliports['features'])} runways {len(runways['features'])}")
+    metar_path = layers / "metar.json"
+    if not metar_path.exists():
+        rows = fetch_metar(metro.metar_stations)
+        metar_path.write_text(json.dumps(rows))
+        print(f"metar {len(rows)}")
+    geoid_path = layers / "geoid18.json"
+    if not geoid_path.exists():
+        geoid_path.write_text(json.dumps(fetch_geoid(metro.geoid_box)))
+        print("geoid written")
 
 
 def main() -> None:
-    LAYERS.mkdir(parents=True, exist_ok=True)
-    ensure_dems()
-    write_operating_area()
-    airspace_path = LAYERS / "class_airspace.geojson"
-    if not airspace_path.exists():
-        airspace_path.write_text(json.dumps(fetch_airspace()))
-    zip_path = ensure_nasr()
-    airports, heliports, runways = build_facilities(zip_path)
-    (LAYERS / "airports.geojson").write_text(json.dumps(airports))
-    (LAYERS / "heliports.geojson").write_text(json.dumps(heliports))
-    (LAYERS / "runways.geojson").write_text(json.dumps(runways))
-    print(f"airports {len(airports['features'])} heliports {len(heliports['features'])} runways {len(runways['features'])}")
-    metar_path = LAYERS / "metar.json"
-    if not metar_path.exists():
-        rows = fetch_metar()
-        metar_path.write_text(json.dumps(rows))
-        print(f"metar {len(rows)}")
-    geoid_path = LAYERS / "geoid18.json"
-    if not geoid_path.exists():
-        geoid_path.write_text(json.dumps(fetch_geoid()))
-        print("geoid written")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--metro", default="dfw", help=f"one of {', '.join(METROS)}")
+    args = parser.parse_args()
+    fetch_all(get(args.metro))
 
 
 if __name__ == "__main__":

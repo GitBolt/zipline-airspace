@@ -52,11 +52,37 @@ def _num(value) -> float | None:
 
 
 def parse_trace(blob: bytes, feed: str, bbox: BBOX) -> list[dict] | None:
+    obj = _decode(blob)
+    return None if obj is None else _rows(obj, feed, bbox)
+
+
+def parse_trace_boxes(blob: bytes, feed: str, boxes: dict[str, BBOX]) -> dict[str, list[dict]]:
+    """Rows for several boxes from one decode. Each box gets exactly what parse_trace would give it."""
+    obj = _decode(blob)
+    if obj is None:
+        return {}
+    out = {}
+    for name, bbox in boxes.items():
+        try:
+            rows = _rows(obj, feed, bbox)
+        except Exception:
+            # Same as a single-box extraction, which skips a trace that fails to parse.
+            continue
+        if rows:
+            out[name] = rows
+    return out
+
+
+def _decode(blob: bytes) -> dict | None:
     raw = gzip.decompress(blob) if blob[:2] == b"\x1f\x8b" else blob
     try:
         obj = orjson.loads(raw)
     except orjson.JSONDecodeError:
         return None
+    return obj if isinstance(obj, dict) else None
+
+
+def _rows(obj: dict, feed: str, bbox: BBOX) -> list[dict] | None:
     trace = obj.get("trace")
     if not isinstance(trace, list) or not trace:
         return None

@@ -149,7 +149,7 @@ def _calibration(lat, lon, geom, on_ground, icao, terrain_m, geoid_n, ends: list
     }
 
 
-def prepare(df: pl.DataFrame, layers: Path, terrain: Terrain) -> tuple[pl.DataFrame, dict, dict]:
+def prepare(df: pl.DataFrame, layers: Path, terrain: Terrain, area) -> tuple[pl.DataFrame, dict, dict]:
     """Height on every point, then zones and time only on the points that matter.
 
     Height, surveillance link and the gap to the next report use the whole
@@ -223,7 +223,7 @@ def prepare(df: pl.DataFrame, layers: Path, terrain: Terrain) -> tuple[pl.DataFr
     lon = df["lon"].to_numpy()
     lat = df["lat"].to_numpy()
 
-    masks = build_masks(layers, terrain)
+    masks = build_masks(layers, terrain, area)
     print("tagging zones")
     flags = {
         "in_area": mask(masks["area"], lon, lat),

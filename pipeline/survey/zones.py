@@ -11,7 +11,7 @@ from shapely.geometry import Polygon, shape
 from shapely.ops import unary_union
 
 from survey.constants import HELIPORT_BUFFER_NM, LOW_HI_FT, RUNWAY_BUFFER_NM
-from survey.geometry import area_sq_mi, buffer_nm, operating_polygon, union_all
+from survey.geometry import area_sq_mi, buffer_nm, union_all
 
 FT_PER_M = 3.280839895
 
@@ -51,11 +51,11 @@ def _collect(features: list[dict], predicate) -> list:
     return geoms
 
 
-def build_masks(layers: Path, terrain) -> dict:
+def build_masks(layers: Path, terrain, area: Polygon) -> dict:
+    """Every zone, clipped to `area`, the metro's operating-area polygon."""
     airspace = _features(layers / "class_airspace.geojson")
     runways = _features(layers / "runways.geojson")
     heliports = _features(layers / "heliports.geojson")
-    area = operating_polygon()
 
     def low_enough(props, geom, classes: set[str]) -> bool:
         if str(props.get("CLASS") or "").upper() not in classes:
@@ -78,6 +78,10 @@ def build_masks(layers: Path, terrain) -> dict:
     class_b_surface = _collect(
         airspace,
         lambda props, geom: str(props.get("CLASS") or "").upper() == "B" and _floor_agl(props, geom, terrain) <= 0.0,
+    )
+    class_c_surface = _collect(
+        airspace,
+        lambda props, geom: str(props.get("CLASS") or "").upper() == "C" and _floor_agl(props, geom, terrain) <= 0.0,
     )
 
     airports = _features(layers / "airports.geojson")
@@ -126,6 +130,7 @@ def build_masks(layers: Path, terrain) -> dict:
         "class_b_low": b_low.intersection(area),
         "class_c_low": c_low.intersection(area),
         "class_b_surface": union_all(class_b_surface).intersection(area),
+        "class_c_surface": union_all(class_c_surface).intersection(area),
         "class_d_surface": union_all(class_d_surface).intersection(area),
         "mandatory": mandatory,
         "carveout": carveout if not carveout.is_empty else veil.intersection(area).difference(b_low),

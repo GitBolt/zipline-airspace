@@ -36,10 +36,11 @@ def write_layers(masks: dict, layers_dir: Path, out: Path, reception: dict | Non
         ("area", {"layer": "operating_area", "label": "Operating area"}, 0.0),
         ("veil", {"layer": "veil", "label": "Mode C veil"}, 0.002),
         ("class_b_surface", {"layer": "class_b", "label": "Class B surface area"}, 0.002),
+        ("class_c_surface", {"layer": "class_c", "label": "Class C surface area"}, 0.002),
         ("class_d_surface", {"layer": "class_d", "label": "Class D surface area"}, 0.002),
         ("public_runway", {"layer": "runway_buffer", "label": "3 NM from a public-use runway"}, 0.003),
     ):
-        feature = _feature(masks[key], props, tol)
+        feature = _feature(masks.get(key), props, tol)
         if feature:
             features.append(feature)
     area = masks["area"]
@@ -152,11 +153,20 @@ def summary_lines(findings: dict) -> list[str]:
     study = findings["study"]
     q1, q2, q3, q4, q5 = (findings[key] for key in ("q1", "q2", "q3", "q4", "q5"))
     apt = q2["airports"]
+    area = study["area"]
+    if "boundary" in study:
+        boundary = study["boundary"]
+        area_line = (
+            f"Proposed operating area: traced from the map in the draft assessment, which gives no coordinates. "
+            f"{area['computed_sq_mi']:.0f} sq mi computed, {area['stated_sq_mi']:.0f} stated; "
+            f"map fitted to {boundary['dots_matched']} airports and heliports, {boundary['residual_rms_m']:.0f} m root mean square."
+        )
+    else:
+        area_line = f"Operating area: {area['computed_sq_mi']:.0f} sq mi computed, {area['stated_sq_mi']:.0f} stated in the assessment."
     lines = [
         f"Window: {study['window'][0]} to {study['window'][1]} (UTC archive days), "
         f"{findings['window']['hours']} hours.",
-        f"Operating area: {study['area']['computed_sq_mi']:.0f} sq mi computed, "
-        f"{study['area']['stated_sq_mi']:.0f} stated in the assessment.",
+        area_line,
         f"Broadcasting is required below 1,200 ft over {_pct(q1['area']['mandatory_share'])} of the area.",
         f"The feed heard at least three aircraft below 580 ft in {_pct(q2['heard_cruise_share'])} of map cells, "
         f"and below 1,200 ft in {_pct(q2['heard_low_share'])}.",
@@ -171,11 +181,12 @@ def summary_lines(findings: dict) -> list[str]:
     return lines
 
 
-def update_readme(readme: Path, findings: dict) -> None:
+def update_readme(readme: Path, findings: dict, marker: str = "findings") -> None:
+    """Rewrite the block between <!-- {marker}:start --> and <!-- {marker}:end -->."""
     if not readme.exists():
         return
     text = readme.read_text()
-    start, end = "<!-- findings:start -->", "<!-- findings:end -->"
+    start, end = f"<!-- {marker}:start -->", f"<!-- {marker}:end -->"
     if start not in text or end not in text:
         return
     block = start + "\n" + "\n".join(f"- {line}" for line in summary_lines(findings)) + "\n" + end

@@ -1,0 +1,205 @@
+{
+ "source": "FAA, Draft Environmental Assessment for Zipline's proposed drone package delivery in multiple Texas metropolitan areas, 11 September 2026, Appendix H (PDF page 194), map scale 1:1,025,400",
+ "image": "data/sources/texas_draft_ea_p194.jpg",
+ "crs": "EPSG:3081",
+ "crs_name": "Texas Centric Lambert Conformal",
+ "metres_per_px": 165.99214309164577,
+ "dots_found": 114,
+ "dots_matched": 94,
+ "matched_by_type": {
+  "A": 59,
+  "H": 34,
+  "U": 1
+ },
+ "residual_rms_m": 107.86857744429803,
+ "residual_median_m": 80.50752736106631,
+ "residual_max_m": 301.6737487618994,
+ "projections": [
+  {
+   "crs": "EPSG:3081",
+   "name": "Texas Centric Lambert Conformal",
+   "rms_px": 0.6499321687963641,
+   "rms_m": 107.86857744429803
+  },
+  {
+   "crs": "EPSG:2277",
+   "name": "Texas Central state plane (Lambert)",
+   "rms_px": 0.6500230392601839,
+   "rms_m": 107.88294977160713
+  },
+  {
+   "crs": "EPSG:26914",
+   "name": "UTM zone 14N",
+   "rms_px": 0.6541815196624762,
+   "rms_m": 108.57027308363122
+  },
+  {
+   "crs": "EPSG:3083",
+   "name": "Texas Centric Albers",
+   "rms_px": 0.6557442239471195,
+   "rms_m": 108.83372854848862
+  },
+  {
+   "crs": "EPSG:5070",
+   "name": "CONUS Albers",
+   "rms_px": 0.6987023843468372,
+   "rms_m": 115.97596903636165
+  },
+  {
+   "crs": "EPSG:4326",
+   "name": "Plate carree (longitude and latitude)",
+   "rms_px": 1.0368739339255957,
+   "rms_m": 167.08957849831222
+  },
+  {
+   "crs": "EPSG:3857",
+   "name": "Web Mercator",
+   "rms_px": 1.2035916346788234,
+   "rms_m": 199.48635408492666
+  }
+ ],
+ "outlines": {
+  "austin": {
+   "corners_px": [
+    [
+     833.51,
+     37.18
+    ],
+    [
+     1056.87,
+     14.17
+    ],
+    [
+     1223.63,
+     34.55
+    ],
+    [
+     1251.29,
+     607.49
+    ],
+    [
+     836.68,
+     610.38
+    ]
+   ],
+   "corners_lonlat": [
+    [
+     -98.134311,
+     30.716384
+    ],
+    [
+     -97.746745,
+     30.747555
+    ],
+    [
+     -97.458098,
+     30.713819
+    ],
+    [
+     -97.423834,
+     29.855524
+    ],
+    [
+     -98.136095,
+     29.858212
+    ]
+   ],
+   "edges": [
+    {
+     "pixels": 926,
+     "spread_px": 1.364
+    },
+    {
+     "pixels": 658,
+     "spread_px": 1.362
+    },
+    {
+     "pixels": 2584,
+     "spread_px": 1.383
+    },
+    {
+     "pixels": 1377,
+     "spread_px": 1.511
+    },
+    {
+     "pixels": 2647,
+     "spread_px": 1.454
+    }
+   ],
+   "corner_shift_bootstrap_p95_m": 58.76829754886708,
+   "corner_shift_other_projections_m": 97.87198153056785,
+   "computed_sq_mi": 2498.1390704111755,
+   "area_if_edges_move_1px_sq_mi": [
+    2477.393316752502,
+    2518.9679425590193
+   ],
+   "stated_sq_mi": 2498.0,
+   "delta_pct": 5.567270263228705e-05
+  },
+  "san_antonio": {
+   "corners_px": [
+    [
+     336.59,
+     611.2
+    ],
+    [
+     959.65,
+     610.28
+    ],
+    [
+     963.99,
+     1111.06
+    ],
+    [
+     340.28,
+     1114.1
+    ]
+   ],
+   "corners_lonlat": [
+    [
+     -98.995209,
+     29.860113
+    ],
+    [
+     -97.924845,
+     29.856692
+    ],
+    [
+     -97.92532,
+     29.107067
+    ],
+    [
+     -98.988538,
+     29.107334
+    ]
+   ],
+   "edges": [
+    {
+     "pixels": 2204,
+     "spread_px": 1.327
+    },
+    {
+     "pixels": 1731,
+     "spread_px": 1.188
+    },
+    {
+     "pixels": 2640,
+     "spread_px": 1.271
+    },
+    {
+     "pixels": 2136,
+     "spread_px": 1.341
+    }
+   ],
+   "corner_shift_bootstrap_p95_m": 72.24855341724665,
+   "corner_shift_other_projections_m": 134.9599007762685,
+   "computed_sq_mi": 3326.165258430742,
+   "area_if_edges_move_1px_sq_mi": [
+    3302.2806311586805,
+    3350.134943799633
+   ],
+   "stated_sq_mi": 3326.0,
+   "delta_pct": 4.968684027123935e-05
+  }
+ }
+}

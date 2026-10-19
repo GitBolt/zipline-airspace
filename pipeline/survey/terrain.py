@@ -8,13 +8,12 @@ import numpy as np
 import rasterio
 from pyproj import Transformer
 
-from survey.constants import DEM_TILES
-
 
 class Terrain:
-    def __init__(self, directory: Path):
+    def __init__(self, directory: Path, tiles):
+        """`tiles` are USGS tile names such as n33w098, from the metro's config."""
         self.tiles = []
-        for name in DEM_TILES:
+        for name in tiles:
             path = directory / f"USGS_1_{name}.tif"
             src = rasterio.open(path)
             arr = src.read(1)

@@ -6,7 +6,7 @@ from pyproj import Geod, Transformer
 from shapely.geometry import Polygon, mapping, shape
 from shapely.ops import transform, unary_union
 
-from survey.constants import CORNERS_LONLAT, STATED_AREA_SQ_MI
+from survey.metros import Metro
 
 GEOD = Geod(ellps="WGS84")
 TO_ALBERS = Transformer.from_crs(4326, 5070, always_xy=True)
@@ -14,8 +14,8 @@ FROM_ALBERS = Transformer.from_crs(5070, 4326, always_xy=True)
 SQ_M_PER_SQ_MI = 2_589_988.110336
 
 
-def operating_polygon() -> Polygon:
-    ring = list(CORNERS_LONLAT) + [CORNERS_LONLAT[0]]
+def operating_polygon(metro: Metro) -> Polygon:
+    ring = list(metro.corners) + [metro.corners[0]]
     poly = Polygon(ring)
     if not poly.is_valid:
         poly = poly.buffer(0)
@@ -71,14 +71,14 @@ def union_all(geoms: list):
     return unary_union(geoms)
 
 
-def area_check(poly: Polygon | None = None) -> dict:
-    poly = poly or operating_polygon()
+def area_check(poly: Polygon, stated_sq_mi: float) -> dict:
+    """The boundary's geodesic area against the area the assessment states."""
     computed = geodesic_area_sq_mi(poly)
-    delta = computed - STATED_AREA_SQ_MI
-    pct = delta / STATED_AREA_SQ_MI
+    delta = computed - stated_sq_mi
+    pct = delta / stated_sq_mi
     return {
         "computed_sq_mi": computed,
-        "stated_sq_mi": STATED_AREA_SQ_MI,
+        "stated_sq_mi": stated_sq_mi,
         "delta_sq_mi": delta,
         "delta_pct": pct,
         "within_half_percent": abs(pct) <= 0.005,

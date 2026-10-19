@@ -1,6 +1,7 @@
 from survey.altitude import agl_from_barometric, agl_from_geometric, choose_basis
 from survey.classify import aircraft_class, capped_dt, link_class, normalize_source
 from survey.geometry import area_check, operating_polygon
+from survey.metros import DFW
 
 
 def test_gap_cap():
@@ -69,8 +70,8 @@ def test_basis_prefers_tighter_residual():
 
 
 def test_operating_area_is_the_published_box():
-    poly = operating_polygon()
+    poly = operating_polygon(DFW)
     assert poly.is_valid
-    check = area_check(poly)
+    check = area_check(poly, DFW.stated_area_sq_mi)
     assert 10_000 < check["computed_sq_mi"] < 12_000
     assert check["stated_sq_mi"] == 10904

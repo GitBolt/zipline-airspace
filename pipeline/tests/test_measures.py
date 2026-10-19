@@ -239,10 +239,12 @@ class FlatTerrain:
 def test_every_public_airport_is_inside_the_stand_off():
     from shapely.geometry import shape
 
+    from survey.geometry import operating_polygon
+    from survey.metros import DFW
     from survey.zones import build_masks
 
     layers = ROOT / "data" / "layers"
-    masks = build_masks(layers, FlatTerrain())
+    masks = build_masks(layers, FlatTerrain(), operating_polygon(DFW))
     airports = json.loads((layers / "airports.geojson").read_text())["features"]
     inside_area = [f for f in airports if f["properties"]["use"] == "PU" and masks["area"].covers(shape(f["geometry"]))]
     assert len(inside_area) > 40

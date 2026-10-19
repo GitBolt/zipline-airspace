@@ -1,4 +1,4 @@
-"""Reproduce the survey from public sources."""
+"""Reproduce the survey for one metro from public sources."""
 
 from __future__ import annotations
 
@@ -17,7 +17,6 @@ from survey.constants import (
     GAP_CAP_S,
     H3_RES,
     HELIPORT_BUFFER_NM,
-    LONGITUDE_CORRECTION,
     LOW_HI_FT,
     LOW_LO_FT,
     REPLAY_DATE,
@@ -27,10 +26,12 @@ from survey.constants import (
     TIMEZONE,
 )
 from survey.export_web import update_readme, write_findings, write_layers, write_replay
-from survey.fetch_layers import main as fetch_layers
+from survey.fetch_layers import fetch_all as fetch_layers
 from survey.fetch_tracks import extract_dates
-from survey.geometry import area_check
+from survey.geometry import area_check, operating_polygon
+from survey.georef import TRACE_FILE
 from survey.metrics import CLASSES, LINKS, compute
+from survey.metros import METROS, Metro, get
 from survey.prepare import load_raw, prepare
 from survey.terrain import Terrain
 from survey.zones import build_masks
@@ -56,32 +57,62 @@ def _features(path: Path) -> list[dict]:
     return json.loads(path.read_text())["features"]
 
 
+def boundary_summary(metro: Metro, trace_file: Path = TRACE_FILE) -> dict:
+    """How a traced boundary was made and how far to trust it, from the trace file.
+
+    Stops if the corners in survey.metros no longer match the trace.
+    """
+    doc = json.loads(trace_file.read_text())
+    entry = doc["outlines"][metro.key]
+    for got, want in zip(metro.corners, entry["corners_lonlat"], strict=True):
+        if max(abs(got[0] - want[0]), abs(got[1] - want[1])) > 1e-6:
+            raise SystemExit(f"{metro.key} corners differ from {trace_file.name}; run python -m survey.georef and copy them")
+    return {
+        "method": "traced",
+        "source": doc["source"],
+        "note": metro.boundary_note,
+        "corners": entry["corners_lonlat"],
+        "map_projection": doc["crs_name"],
+        "metres_per_pixel": doc["metres_per_px"],
+        "dots_found": doc["dots_found"],
+        "dots_matched": doc["dots_matched"],
+        "residual_rms_m": doc["residual_rms_m"],
+        "residual_max_m": doc["residual_max_m"],
+        "corner_shift_bootstrap_p95_m": entry["corner_shift_bootstrap_p95_m"],
+        "corner_shift_other_projections_m": entry["corner_shift_other_projections_m"],
+        "area_if_edges_move_1px_sq_mi": entry["area_if_edges_move_1px_sq_mi"],
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--metro", default="dfw", help=f"one of {', '.join(METROS)}")
     parser.add_argument("--dates", nargs="*", default=STUDY_DATES)
     parser.add_argument("--from-raw", action="store_true", help="skip downloads; use data/raw")
     parser.add_argument("--from-prepared", action="store_true", help="skip height and zones; use data/agl")
-    parser.add_argument("--out", type=Path, default=ROOT / "web" / "public" / "data")
+    parser.add_argument("--out", type=Path, default=None, help="default: the metro's folder under web/public/data")
     args = parser.parse_args()
+    metro = get(args.metro)
     dates = args.dates
-    layers = ROOT / "data" / "layers"
-    cache = ROOT / "data" / "agl" / "prepared.parquet"
+    layers = metro.layers_dir
+    cache = metro.cache
     cal_cache = cache.with_suffix(".calibration.json")
+    area = operating_polygon(metro)
     offline = args.from_raw or args.from_prepared
     if not offline and (not (layers / "class_airspace.geojson").exists() or not (layers / "geoid18.json").exists()):
-        fetch_layers()
+        fetch_layers(metro)
     if not offline:
-        extract_dates(dates)
-    terrain = Terrain(ROOT / "data" / "terrain")
+        extract_dates(dates, [metro])
+    terrain = Terrain(ROOT / "data" / "terrain", metro.dem_tiles)
     try:
         if args.from_prepared and cache.exists():
             prepared = pl.read_parquet(cache)
             calibration = json.loads(cal_cache.read_text())
-            areas = {"masks": build_masks(layers, terrain)}
+            areas = {"masks": build_masks(layers, terrain, area)}
         else:
             print("loading")
-            frame = load_raw(ROOT / "data" / "raw", dates)
-            prepared, calibration, areas = prepare(frame, layers, terrain)
+            frame = load_raw(metro.raw_dir, dates)
+            prepared, calibration, areas = prepare(frame, layers, terrain, area)
             calibration = _clean(calibration)
             cache.parent.mkdir(parents=True, exist_ok=True)
             prepared.write_parquet(cache, compression="zstd")
@@ -94,15 +125,21 @@ def main() -> None:
         "heliports": _features(layers / "heliports.geojson"),
         "runway_ends": json.loads((layers / "runway_ends.json").read_text()),
     }
-    findings, cells = compute(prepared, areas, dates, facilities)
+    findings, cells = compute(prepared, areas, dates, facilities, metro.hub)
     findings = _clean(findings)
     replay_day = REPLAY_DATE
-    findings["study"] = {
-        "name": "DFW Low-Altitude Surveillance Survey",
+    study = {
+        "name": metro.survey_name,
         "window": [dates[0], dates[-1]],
         "timezone": TIMEZONE,
-        "area": _clean(area_check(areas["masks"]["area"])),
-        "longitude_correction": LONGITUDE_CORRECTION,
+        "area": _clean(area_check(areas["masks"]["area"], metro.stated_area_sq_mi)),
+    }
+    if metro.traced:
+        study["boundary"] = _clean(boundary_summary(metro))
+    else:
+        study["longitude_correction"] = metro.boundary_note
+    findings["study"] = {
+        **study,
         "instrument": "adsb.lol readsb archives, production feed plus mlat-only feed",
         "replay_date": replay_day,
         "low_band_ft": [LOW_LO_FT, LOW_HI_FT],
@@ -118,14 +155,14 @@ def main() -> None:
         "links": LINKS,
     }
     findings["calibration"] = calibration
-    out = args.out
+    out = args.out or metro.web_dir
     out.mkdir(parents=True, exist_ok=True)
     write_findings(findings, out / "findings.json")
     (out / "cells.json").write_text(json.dumps(cells, separators=(",", ":")))
     write_layers(areas["masks"], layers, out / "layers.geojson", findings["q2"]["airports"])
     replay_info = write_replay(prepared, out / "replay.json", replay_day)
-    if out == ROOT / "web" / "public" / "data":
-        update_readme(ROOT / "README.md", findings)
+    if out == metro.web_dir:
+        update_readme(ROOT / "README.md", findings, "findings" if metro.key == "dfw" else f"findings:{metro.key}")
         for name in ("METHODS.md", "LIMITS.md"):
             shutil.copyfile(ROOT / name, ROOT / "web" / "public" / name)
     for key in ("q1", "q3", "q5"):

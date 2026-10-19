@@ -1,19 +1,24 @@
-"""Download one day of adsb.lol history and keep points inside the study box."""
+"""Download one day of adsb.lol history and keep points inside each metro's study box.
+
+One pass over an archive writes every metro asked for, so a day is downloaded
+once however many metros need it.
+"""
 
 from __future__ import annotations
 
+import argparse
 import subprocess
 from pathlib import Path
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from survey.constants import BBOX_PAD_DEG, CORNERS_LONLAT
-from survey.traces import iter_trace_blobs, parse_trace
+from survey.constants import STUDY_DATES
+from survey.metros import METROS, Metro, get
+from survey.traces import iter_trace_blobs, parse_trace_boxes
 
 ROOT = Path(__file__).resolve().parents[2]
 ARCHIVES = ROOT / "data" / "archives"
-RAW = ROOT / "data" / "raw"
 
 SCHEMA = pa.schema(
     [
@@ -33,17 +38,6 @@ SCHEMA = pa.schema(
         ("gs", pa.float32()),
     ]
 )
-
-
-def study_bbox() -> tuple[float, float, float, float]:
-    lons = [c[0] for c in CORNERS_LONLAT]
-    lats = [c[1] for c in CORNERS_LONLAT]
-    return (
-        min(lons) - BBOX_PAD_DEG,
-        min(lats) - BBOX_PAD_DEG,
-        max(lons) + BBOX_PAD_DEG,
-        max(lats) + BBOX_PAD_DEG,
-    )
 
 
 def release_names(date: str, kind: str) -> tuple[str, list[str]]:
@@ -72,28 +66,59 @@ def ensure_archive(date: str, kind: str) -> list[Path]:
     return paths
 
 
-def _flush(writer, buffer: list[dict]):
-    if not buffer:
-        return writer
-    table = pa.Table.from_pylist(buffer, schema=SCHEMA)
-    if writer is None:
-        raise RuntimeError("writer missing")
-    writer.write_table(table)
-    buffer.clear()
-    return writer
+def raw_path(metro: Metro, date: str, kind: str) -> Path:
+    return metro.raw_dir / f"{date}-{kind}.parquet"
 
 
-def extract_day(date: str, kind: str, bbox: tuple[float, float, float, float]) -> int:
-    RAW.mkdir(parents=True, exist_ok=True)
-    out = RAW / f"{date}-{kind}.parquet"
-    if out.exists() and out.stat().st_size > 0:
-        print(f"have {out.name}")
-        return -1
+class _Sink:
+    """Buffered parquet output for one metro."""
+
+    def __init__(self, out: Path):
+        out.parent.mkdir(parents=True, exist_ok=True)
+        self.out = out
+        self.part = out.with_suffix(".parquet.partial")
+        self.writer = pq.ParquetWriter(self.part, SCHEMA, compression="zstd")
+        self.buffer: list[dict] = []
+        self.kept = 0
+
+    def add(self, rows: list[dict]) -> None:
+        self.buffer.extend(rows)
+        self.kept += len(rows)
+        if len(self.buffer) >= 200_000:
+            self.flush()
+
+    def flush(self) -> None:
+        if self.buffer:
+            self.writer.write_table(pa.Table.from_pylist(self.buffer, schema=SCHEMA))
+            self.buffer.clear()
+
+    def finish(self) -> None:
+        self.flush()
+        self.writer.close()
+        if self.kept == 0:
+            self.part.unlink(missing_ok=True)
+            pq.write_table(pa.Table.from_pylist([], schema=SCHEMA), self.out)
+        else:
+            self.part.replace(self.out)
+
+    def abandon(self) -> None:
+        self.writer.close()
+
+
+def extract_day(date: str, kind: str, metros: list[Metro]) -> dict[str, int]:
+    """Write `date`'s points for every metro that does not have them yet. Returns points kept per metro."""
+    todo = []
+    for metro in metros:
+        out = raw_path(metro, date, kind)
+        if out.exists() and out.stat().st_size > 0:
+            print(f"have {metro.key} {out.name}")
+        else:
+            todo.append(metro)
+    if not todo:
+        return {}
     paths = ensure_archive(date, kind)
-    part = out.with_suffix(".parquet.partial")
-    writer = pq.ParquetWriter(part, SCHEMA, compression="zstd")
-    buffer: list[dict] = []
-    kept = 0
+    boxes = {metro.key: metro.bbox() for metro in todo}
+    sinks = {metro.key: _Sink(raw_path(metro, date, kind)) for metro in todo}
     files = 0
     errors = 0
     feed = "prod" if kind == "prod" else "mlatonly"
@@ -101,38 +126,45 @@ def extract_day(date: str, kind: str, bbox: tuple[float, float, float, float]) -
         for _name, blob in iter_trace_blobs([str(p) for p in paths]):
             files += 1
             try:
-                rows = parse_trace(blob, feed, bbox)
+                found = parse_trace_boxes(blob, feed, boxes)
             except Exception:
                 errors += 1
                 continue
-            if not rows:
-                continue
-            for row in rows:
-                row["date"] = date
-                buffer.append(row)
-            kept += len(rows)
-            if len(buffer) >= 200_000:
-                _flush(writer, buffer)
+            for key, rows in found.items():
+                for row in rows:
+                    row["date"] = date
+                sinks[key].add(rows)
             if files % 5000 == 0:
+                kept = " ".join(f"{key} {sink.kept}" for key, sink in sinks.items())
                 print(f"  {date} {kind} files {files} points {kept} errors {errors}")
-        _flush(writer, buffer)
-    finally:
-        writer.close()
-    if kept == 0:
-        part.unlink(missing_ok=True)
-        empty = pa.Table.from_pylist([], schema=SCHEMA)
-        pq.write_table(empty, out)
-        print(f"no study-box points in {date} {kind} ({files} files). Wrote an empty table.")
-    else:
-        part.replace(out)
-        print(f"wrote {out.name} files {files} points {kept} errors {errors}")
+    except BaseException:
+        for sink in sinks.values():
+            sink.abandon()
+        raise
+    for key, sink in sinks.items():
+        sink.finish()
+        if sink.kept == 0:
+            print(f"no study-box points for {key} in {date} {kind} ({files} files). Wrote an empty table.")
+        else:
+            print(f"wrote {key} {sink.out.name} files {files} points {sink.kept} errors {errors}")
     for path in paths:
         path.unlink(missing_ok=True)
-    return kept
+    return {key: sink.kept for key, sink in sinks.items()}
 
 
-def extract_dates(dates: list[str]) -> None:
-    box = study_bbox()
+def extract_dates(dates: list[str], metros: list[Metro]) -> None:
     for date in dates:
-        extract_day(date, "prod", box)
-        extract_day(date, "mlatonly", box)
+        extract_day(date, "prod", metros)
+        extract_day(date, "mlatonly", metros)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dates", nargs="*", default=STUDY_DATES)
+    parser.add_argument("--metros", nargs="*", default=list(METROS), help=f"any of {', '.join(METROS)}")
+    args = parser.parse_args()
+    extract_dates(args.dates, [get(key) for key in args.metros])
+
+
+if __name__ == "__main__":
+    main()
