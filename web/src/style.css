@@ -75,6 +75,10 @@ body { margin: 0; background: var(--surface); color: var(--ink); }
 .topbar button { background: none; border: 0; border-radius: 999px; padding: 0.35rem 0.8rem; font-weight: 500; transition: background 0.15s; }
 .topbar button:hover { background: var(--soft); }
 .filter-toggle { display: none; }
+.metro-switch { flex: none; display: flex; gap: 2px; padding: 3px; background: var(--soft); border-radius: 999px; }
+.metro-switch a { padding: 0.2rem 0.75rem; border-radius: 999px; color: var(--ink); font-weight: 600; text-decoration: none; white-space: nowrap; transition: background 0.15s, color 0.15s; }
+.metro-switch a:hover { background: rgba(255, 255, 255, 0.7); }
+.metro-switch a[aria-current="page"] { background: var(--ink); color: #fff; }
 
 .strip {
   position: absolute;
@@ -362,6 +366,7 @@ table.data td.num { white-space: nowrap; font-weight: 600; }
   .topbar { padding-left: 0.9rem; gap: 0.2rem; }
   .topbar h1 { font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; }
   .bar-nav button:not(:last-child) { display: none; }
+  .metro-switch a { padding: 0.2rem 0.6rem; }
   .strip { display: flex; overflow-x: auto; scrollbar-width: none; }
   .chip { flex: none; width: 11.5rem; height: 4.3rem; }
   .rail { display: none; right: var(--gap); width: auto; z-index: 8; }
@@ -377,6 +382,12 @@ table.data td.num { white-space: nowrap; font-weight: 600; }
     from { opacity: 0; transform: translateY(28px); }
     to { opacity: 1; transform: none; }
   }
+}
+
+/* Phones: the switch names the metro, so the long title gives way to it. It stays for screen readers. */
+@media (max-width: 560px) {
+  .topbar h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .metro-switch { margin-right: auto; }
 }
 
 @media (max-height: 720px) {

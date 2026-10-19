@@ -6,6 +6,7 @@ import { decodeCells } from "./data";
 import { createDrawer } from "./drawer";
 import { renderExplorer } from "./explorer";
 import { el, num } from "./format";
+import { cameFromSwitch, markSwitch, metroFromUrl, metroHref, METROS, type Metro } from "./metros";
 import { answers, buildSections } from "./report";
 import { installTips } from "./tip";
 import type { Findings, RawCell } from "./types";
@@ -18,11 +19,29 @@ async function load<T>(path: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-async function start(app: HTMLElement): Promise<void> {
+function title(metro: Metro): string {
+  return `Who shares the low sky with Zipline in ${metro.name}`;
+}
+
+/** DFW / Austin. Each is a plain link, so a metro can be shared and opened directly. */
+function metroSwitch(current: Metro): HTMLElement {
+  const nav = el("nav", { class: "metro-switch", "aria-label": "Metro" });
+  for (const metro of METROS) {
+    const link = el("a", { href: metroHref(metro) }, [metro.label]);
+    if (metro.key === current.key) {
+      link.setAttribute("aria-current", "page");
+      link.addEventListener("click", (event) => event.preventDefault());
+    } else link.addEventListener("click", markSwitch);
+    nav.append(link);
+  }
+  return nav;
+}
+
+async function start(app: HTMLElement, metro: Metro): Promise<void> {
   const [findings, rawCells, layers] = await Promise.all([
-    load<Findings>("data/findings.json"),
-    load<RawCell[]>("data/cells.json"),
-    load<FeatureCollection>("data/layers.geojson"),
+    load<Findings>(`${metro.data}findings.json`),
+    load<RawCell[]>(`${metro.data}cells.json`),
+    load<FeatureCollection>(`${metro.data}layers.geojson`),
   ]);
   const cells = decodeCells(rawCells);
   app.replaceChildren();
@@ -34,8 +53,8 @@ async function start(app: HTMLElement): Promise<void> {
   const strip = el("div", { class: "strip", role: "group", "aria-label": "Findings" });
   // In the page before the map is made, so the map can measure its container.
   app.append(bar, strip, el("div", { class: "workspace" }, [rail, stage]));
-  const explorer = renderExplorer({ rail, stage, drawer }, cells, layers, findings, `${base}data/replay.json`);
-  const sections = buildSections(findings, { showOnMap: explorer.showOnMap });
+  const explorer = renderExplorer({ rail, stage, drawer }, cells, layers, findings, `${base}${metro.data}replay.json`, metro);
+  const sections = buildSections(findings, { showOnMap: explorer.showOnMap }, metro);
 
   function openSection(id: string): void {
     const section = sections.find((item) => item.id === id);
@@ -62,12 +81,17 @@ async function start(app: HTMLElement): Promise<void> {
     filterToggle.setAttribute("aria-expanded", String(open));
   });
   bar.append(
-    el("h1", {}, ["Who shares the low sky with Zipline in Dallas–Fort Worth"]),
-    el("p", { class: "bar-note" }, ["One week of public flight tracking over the area in Zipline's FAA assessment. Based on public data only."]),
+    el("h1", {}, [title(metro)]),
+    metroSwitch(metro),
+    el("p", { class: "bar-note" }, [
+      metro.traced
+        ? "One week of public flight tracking over the area in the FAA's draft assessment for Zipline. Based on public data only."
+        : "One week of public flight tracking over the area in Zipline's FAA assessment. Based on public data only.",
+    ]),
     filterToggle,
     nav,
   );
-  for (const answer of answers(findings)) {
+  for (const answer of answers(findings, metro)) {
     const chip = el("button", { type: "button", class: "chip" }, [
       el("span", { class: "num" }, [answer.value]),
       el("span", { class: "chip-label" }, [answer.label]),
@@ -76,17 +100,19 @@ async function start(app: HTMLElement): Promise<void> {
     strip.append(chip);
   }
 
-  app.append(welcome(findings));
+  if (!cameFromSwitch()) app.append(welcome(findings, metro));
   installTips(document.body);
 }
 
 /** A short card on arrival that says what this is and how to use it. */
-function welcome(findings: Findings): HTMLElement {
+function welcome(findings: Findings, metro: Metro): HTMLElement {
   const go = el("button", { type: "button", class: "button" }, ["Explore the map"]);
   const card = el("div", { class: "welcome-card", role: "dialog", "aria-modal": "true", "aria-label": "About this map" }, [
-    el("h2", {}, ["Who shares the low sky with Zipline in Dallas–Fort Worth?"]),
+    el("h2", {}, [`${title(metro)}?`]),
     el("p", {}, [
-      "Zipline's delivery drones cruise at 330 ft inside the area the FAA has approved around Dallas–Fort Worth. Helicopters and small planes fly low there too.",
+      metro.traced
+        ? `Zipline's delivery drones cruise at 330 ft. The FAA's draft assessment for the Texas metros proposes an operating area around ${metro.name}, shown only as a map; the outline here is traced from it. Helicopters and small planes fly low there too.`
+        : `Zipline's delivery drones cruise at 330 ft inside the area the FAA has approved around ${metro.name}. Helicopters and small planes fly low there too.`,
     ]),
     el("p", {}, [
       `This map uses ${num(findings.window.hours / 24)} days of public flight tracking to show where those crewed aircraft fly at drone height, whether they broadcast their position, and where public tracking cannot see them.`,
@@ -112,7 +138,9 @@ inject();
 
 const app = document.querySelector<HTMLElement>("#app");
 if (app) {
-  start(app).catch((error: unknown) => {
+  const metro = metroFromUrl();
+  document.title = title(metro);
+  start(app, metro).catch((error: unknown) => {
     app.replaceChildren(
       el("p", { class: "load-error" }, [
         `The survey data did not load (${error instanceof Error ? error.message : "unknown error"}). Run the pipeline to write web/public/data, then reload.`,

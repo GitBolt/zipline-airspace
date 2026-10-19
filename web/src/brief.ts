@@ -1,6 +1,7 @@
 import type { Feature, FeatureCollection, Point } from "geojson";
 import { bearing, GROUPS, milesBetween, type Cell } from "./data";
 import { coord, el, feet, hourRange, num, pct, perDay, svg } from "./format";
+import type { Metro } from "./metros";
 import type { Findings } from "./types";
 
 const NM_PER_MI = 0.868976;
@@ -185,8 +186,12 @@ function receptionSentence(brief: Brief): string {
   return `Public tracking heard aircraft at drone height over ${pct(drone)} of the circle and below 1,200 ft over ${pct(drone + low)}. The remaining ${pct(higher + none)} is unproven, so low traffic there may be undercounted.`;
 }
 
+function areaName(metro: Metro): string {
+  return metro.traced ? "traced operating area" : "published operating area";
+}
+
 /** The brief as plain text, for pasting into a note or a ticket. */
-export function briefText(brief: Brief, findings: Findings): string {
+export function briefText(brief: Brief, findings: Findings, metro: Metro): string {
   const [first, last] = findings.study.window;
   const groups = GROUPS.map((group, i) => ({ label: group.label, share: brief.byGroup[i] }))
     .filter((group) => group.share > 0)
@@ -194,7 +199,7 @@ export function briefText(brief: Brief, findings: Findings): string {
   const total = brief.byGroup.reduce((sum, value) => sum + value, 0) || 1;
   const lines = [
     `Low-altitude traffic brief: within ${brief.miles} miles of ${coord(brief.lat, brief.lon)} (${where(brief)})`,
-    `Source: DFW Low-Altitude Surveillance Survey, adsb.lol public feed, ${first} to ${last} UTC. Based on public data only.`,
+    `Source: ${findings.study.name}, adsb.lol public feed, ${first} to ${last} UTC. Based on public data only.`,
     "",
     `80-580 ft above ground: ${num(brief.cruisePresent, 2)} crewed aircraft on average (${perDay(brief.cruiseMinutesPerDay)}), ${pct(brief.cruiseShareOfArea, 1)} of the whole operating area's total.`,
     `Surface-1,200 ft: ${num(brief.lowPresent, 2)} on average (${perDay(brief.lowMinutesPerDay)}).`,
@@ -209,7 +214,7 @@ export function briefText(brief: Brief, findings: Findings): string {
     `Public-use airports inside: ${brief.publicAirports.length ? brief.publicAirports.map((a) => `${a.name} (${a.id}, ${num(a.nm, 1)} NM)`).join("; ") : "none"}.`,
     `Also inside: ${brief.privateStrips} private-use airports, ${brief.heliports} heliports (${brief.medicalHeliports} medical).`,
     `Reception: ${receptionSentence(brief)}`,
-    brief.insideShare < 0.93 ? `Only ${pct(brief.insideShare)} of this circle is inside the published operating area; the rest is not surveyed.` : "",
+    brief.insideShare < 0.93 ? `Only ${pct(brief.insideShare)} of this circle is inside the ${areaName(metro)}; the rest is not surveyed.` : "",
     "",
     "Counts are what a ground receiver network heard: a lower bound, not an encounter or risk estimate.",
   ];
@@ -287,20 +292,22 @@ export function renderBrief(
   panel: HTMLElement,
   brief: Brief,
   findings: Findings,
+  metro: Metro,
   actions: { onAirport: (lat: number, lon: number) => void },
 ): void {
   panel.replaceChildren();
+  const radius = metro.traced
+    ? "Ten miles is how far one Zipline site delivers in the Dallas–Fort Worth assessment; the Texas draft limits each round trip to 20 miles."
+    : "Ten miles is how far one Zipline site delivers in the FAA assessment.";
   panel.append(
-    el("p", { class: "muted" }, [
-      `${coord(brief.lat, brief.lon)}, ${where(brief)}. Ten miles is how far one Zipline site delivers in the FAA assessment. This is any point you pick, not a Zipline site.`,
-    ]),
+    el("p", { class: "muted" }, [`${coord(brief.lat, brief.lon)}, ${where(brief)}. ${radius} This is any point you pick, not a Zipline site.`]),
   );
   if (brief.cells === 0) {
-    panel.append(el("p", {}, ["This point is outside the published operating area. Click inside the outlined box."]));
+    panel.append(el("p", {}, [`This point is outside the ${areaName(metro)}. Click inside the outline.`]));
     return;
   }
   if (brief.insideShare < 0.93) {
-    panel.append(el("p", { class: "caution" }, [`Only ${pct(brief.insideShare)} of this circle is inside the published operating area. The rest is not surveyed.`]));
+    panel.append(el("p", { class: "caution" }, [`Only ${pct(brief.insideShare)} of this circle is inside the ${areaName(metro)}. The rest is not surveyed.`]));
   }
   const total = brief.byGroup.reduce((sum, value) => sum + value, 0);
   const list = el("dl", { class: "brief-list" }, [
@@ -371,7 +378,7 @@ export function renderBrief(
   const copy = el("button", { type: "button", class: "button" }, ["Copy brief as text"]);
   copy.addEventListener("click", async () => {
     try {
-      await navigator.clipboard.writeText(briefText(brief, findings));
+      await navigator.clipboard.writeText(briefText(brief, findings, metro));
       copy.textContent = "Copied";
     } catch {
       copy.textContent = "Copy failed";

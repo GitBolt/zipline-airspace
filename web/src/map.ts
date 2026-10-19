@@ -39,7 +39,16 @@ function hexFromRgb(color: string): RGB {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
-const AREA_BOUNDS: [number, number, number, number] = [-98.0, 32.16, -95.9, 33.52];
+/** The operating area's outline, with a small margin, as [west, south, east, north]. */
+function areaBounds(layers: FeatureCollection): [number, number, number, number] {
+  const area = layers.features.find((feature) => feature.properties?.layer === "operating_area");
+  const ring = area?.geometry.type === "Polygon" ? area.geometry.coordinates[0] : [];
+  if (!ring.length) return [-98.0, 32.16, -95.9, 33.52];
+  const lons = ring.map((point) => point[0]);
+  const lats = ring.map((point) => point[1]);
+  const pad = 0.02;
+  return [Math.min(...lons) - pad, Math.min(...lats) - pad, Math.max(...lons) + pad, Math.max(...lats) + pad];
+}
 /** Leave the floating panels clear: header above, filters on the left, replay below. */
 function fit(container: HTMLElement): { padding: { top: number; bottom: number; left: number; right: number } } {
   const wide = container.clientWidth > 820;
@@ -64,7 +73,7 @@ export interface MapHandle {
 export type OverlayName = "airspace" | "standoff" | "facilities" | "busy";
 
 const OVERLAY_LAYERS: Record<OverlayName, string[]> = {
-  airspace: ["veil-line", "class-b-line", "class-d-line"],
+  airspace: ["veil-line", "class-b-line", "class-c-line", "class-d-line"],
   standoff: ["standoff-fill", "standoff-line"],
   facilities: ["runways", "airports", "airport-labels", "heliports"],
   busy: ["busy-line"],
@@ -78,10 +87,11 @@ export function createMap(
   onPick: (lat: number, lon: number) => void,
 ): MapHandle {
   const days = findings.window.hours / 24;
+  const areaBox = areaBounds(layers);
   const map = new maplibregl.Map({
     container,
     style: STYLE,
-    bounds: AREA_BOUNDS,
+    bounds: areaBox,
     fitBoundsOptions: fit(container),
     attributionControl: { compact: true },
     cooperativeGestures: true,
@@ -229,6 +239,7 @@ export function createMap(
     map.addLayer({ id: "standoff-line", type: "line", source: "airspace", filter: where("runway_buffer"), paint: { "line-color": "#1b2536", "line-width": 1, "line-dasharray": [3, 2], "line-opacity": 0.7 } });
     map.addLayer({ id: "class-d-line", type: "line", source: "airspace", filter: where("class_d"), layout: { visibility: "none" }, paint: { "line-color": "#1d4f91", "line-width": 1.2, "line-dasharray": [4, 3] } });
     map.addLayer({ id: "class-b-line", type: "line", source: "airspace", filter: where("class_b"), layout: { visibility: "none" }, paint: { "line-color": "#1d4f91", "line-width": 1.6 } });
+    map.addLayer({ id: "class-c-line", type: "line", source: "airspace", filter: where("class_c"), layout: { visibility: "none" }, paint: { "line-color": "#1d4f91", "line-width": 1.6 } });
     map.addLayer({ id: "veil-line", type: "line", source: "airspace", filter: where("veil"), layout: { visibility: "none" }, paint: { "line-color": "#a8176b", "line-width": 1.8 } });
     map.addLayer({ id: "area-line", type: "line", source: "airspace", filter: where("operating_area"), paint: { "line-color": "#1b2536", "line-width": 2 } });
     map.addSource("busy", {
@@ -313,7 +324,7 @@ export function createMap(
   });
   new ResizeObserver(() => {
     map.resize();
-    if (!moved) map.fitBounds(AREA_BOUNDS, { ...fit(container), duration: 0 });
+    if (!moved) map.fitBounds(areaBox, { ...fit(container), duration: 0 });
   }).observe(container);
 
   const pending: Partial<Record<OverlayName, boolean>> = {};

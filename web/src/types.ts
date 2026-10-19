@@ -72,13 +72,33 @@ export interface SensitivityRun {
   rotorcraft_share_of_cruise: number | null;
 }
 
+/** How a boundary with no published coordinates was traced from the assessment's map. */
+export interface TracedBoundary {
+  method: "traced";
+  source: string;
+  note: string;
+  corners: [number, number][];
+  map_projection: string;
+  metres_per_pixel: number;
+  dots_found: number;
+  dots_matched: number;
+  residual_rms_m: number;
+  residual_max_m: number;
+  corner_shift_bootstrap_p95_m: number;
+  corner_shift_other_projections_m: number;
+  area_if_edges_move_1px_sq_mi: [number, number];
+}
+
 export interface Findings {
   study: {
     name: string;
     window: [string, string];
     timezone: string;
     area: { computed_sq_mi: number; stated_sq_mi: number; delta_pct: number; within_half_percent: boolean };
-    longitude_correction: string;
+    /** Published boundaries: how the printed corners were read. */
+    longitude_correction?: string;
+    /** Traced boundaries. */
+    boundary?: TracedBoundary;
     replay_date: string;
     low_band_ft: [number, number];
     cruise_band_ft: [number, number];
@@ -123,6 +143,7 @@ export interface Findings {
       outside_rule_share: number;
       veil_sq_mi: number;
       class_b_low_sq_mi: number;
+      class_c_low_sq_mi: number;
       class_d_surface_sq_mi: number;
       medical_heliports: number;
       heliports: number;

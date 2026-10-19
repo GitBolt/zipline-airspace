@@ -1,0 +1,893 @@
+{
+ "window": {
+  "utc_days": [
+   "2026-09-28",
+   "2026-09-29",
+   "2026-09-30",
+   "2026-10-01",
+   "2026-10-02",
+   "2026-10-03",
+   "2026-10-04"
+  ],
+  "hours": 168,
+  "by_hour": [
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7
+  ],
+  "weekday_hours": 120,
+  "weekend_hours": 48,
+  "local_start": "2026-09-27 19:00",
+  "local_end": "2026-10-04 19:00"
+ },
+ "health": {
+  "days": [
+   {
+    "date": "2026-09-28",
+    "points": 316919,
+    "aircraft": 716,
+    "large_aircraft": 294,
+    "light_aircraft": 270,
+    "tracked_hours": 161.561128
+   },
+   {
+    "date": "2026-09-29",
+    "points": 330102,
+    "aircraft": 720,
+    "large_aircraft": 284,
+    "light_aircraft": 281,
+    "tracked_hours": 167.129019
+   },
+   {
+    "date": "2026-09-30",
+    "points": 289170,
+    "aircraft": 639,
+    "large_aircraft": 263,
+    "light_aircraft": 196,
+    "tracked_hours": 124.587328
+   },
+   {
+    "date": "2026-10-01",
+    "points": 163562,
+    "aircraft": 403,
+    "large_aircraft": 232,
+    "light_aircraft": 70,
+    "tracked_hours": 49.639153
+   },
+   {
+    "date": "2026-10-02",
+    "points": 215718,
+    "aircraft": 523,
+    "large_aircraft": 336,
+    "light_aircraft": 77,
+    "tracked_hours": 60.525775
+   },
+   {
+    "date": "2026-10-03",
+    "points": 169279,
+    "aircraft": 404,
+    "large_aircraft": 278,
+    "light_aircraft": 61,
+    "tracked_hours": 51.937242
+   },
+   {
+    "date": "2026-10-04",
+    "points": 170352,
+    "aircraft": 432,
+    "large_aircraft": 257,
+    "light_aircraft": 93,
+    "tracked_hours": 57.749578
+   }
+  ],
+  "thin_hours": [
+   {
+    "utc": "2026-09-30 06:00",
+    "points": 152,
+    "typical": 1382
+   }
+  ],
+  "hours_checked": 168
+ },
+ "q1": {
+  "area": {
+   "operating_sq_mi": 2498.037223,
+   "mandatory_sq_mi": 104.009761,
+   "mandatory_share": 0.041637,
+   "carveout_sq_mi": 0.0,
+   "carveout_share": 0.0,
+   "outside_rule_sq_mi": 2394.027462,
+   "outside_rule_share": 0.958363,
+   "veil_sq_mi": 0.0,
+   "class_b_low_sq_mi": 0.0,
+   "class_c_low_sq_mi": 104.009761,
+   "class_d_surface_sq_mi": 202.573345,
+   "medical_heliports": 13,
+   "heliports": 29,
+   "public_airports": 7
+  },
+  "traffic": {
+   "low_band_hours": 327.914881,
+   "share_where_required": 0.37144,
+   "share_outside_rule": 0.62856
+  }
+ },
+ "q2": {
+  "cells": 1169,
+  "min_support": 3,
+  "tiers": {
+   "cruise": 129,
+   "low": 478,
+   "higher": 562,
+   "none": 0
+  },
+  "heard_cruise_share": 0.110351,
+  "heard_low_share": 0.519247,
+  "not_shown_share": 0.480753,
+  "airports": {
+   "checked": 9,
+   "tracked_to_ground": 7,
+   "min_visits": 5,
+   "radius_nm": 1.5,
+   "ground_ft": 100.0,
+   "table": [
+    {
+     "id": "AUS",
+     "name": "Austin-Bergstrom Intl",
+     "use": "PU",
+     "lon": -97.66988,
+     "lat": 30.19453,
+     "visits": 2917,
+     "median_lowest_ft": 0.0,
+     "to_ground_share": 0.994172,
+     "hub_nm": 0.00205
+    },
+    {
+     "id": "EDC",
+     "name": "Austin Executive",
+     "use": "PU",
+     "lon": -97.56639,
+     "lat": 30.39749,
+     "visits": 287,
+     "median_lowest_ft": 0.0,
+     "to_ground_share": 0.968641,
+     "hub_nm": 13.302203
+    },
+    {
+     "id": "GTU",
+     "name": "Georgetown Executive",
+     "use": "PU",
+     "lon": -97.67939,
+     "lat": 30.67881,
+     "visits": 284,
+     "median_lowest_ft": 0.0,
+     "to_ground_share": 0.93662,
+     "hub_nm": 29.05137
+    },
+    {
+     "id": "HYI",
+     "name": "San Marcos Regional",
+     "use": "PU",
+     "lon": -97.863,
+     "lat": 29.89275,
+     "visits": 223,
+     "median_lowest_ft": 91.960842,
+     "to_ground_share": 0.547085,
+     "hub_nm": 20.684832
+    },
+    {
+     "id": "RYW",
+     "name": "Lago Vista TX/Rusty Allen",
+     "use": "PU",
+     "lon": -97.96947,
+     "lat": 30.49858,
+     "visits": 52,
+     "median_lowest_ft": 34.349925,
+     "to_ground_share": 0.826923,
+     "hub_nm": 23.948324
+    },
+    {
+     "id": "3R9",
+     "name": "Lakeway Airpark",
+     "use": "PU",
+     "lon": -97.99447,
+     "lat": 30.35749,
+     "visits": 37,
+     "median_lowest_ft": 55.066311,
+     "to_ground_share": 0.594595,
+     "hub_nm": 19.465604
+    },
+    {
+     "id": "88R",
+     "name": "Spicewood",
+     "use": "PU",
+     "lon": -98.12144,
+     "lat": 30.47378,
+     "visits": 28,
+     "median_lowest_ft": 429.867242,
+     "to_ground_share": 0.142857,
+     "hub_nm": 28.778409
+    },
+    {
+     "id": "40XS",
+     "name": "Hank Sasser/Breakaway",
+     "use": "PR",
+     "lon": -97.78082,
+     "lat": 30.51763,
+     "visits": 17,
+     "median_lowest_ft": 9.919569,
+     "to_ground_share": 1.0,
+     "hub_nm": 20.211757
+    },
+    {
+     "id": "TS01",
+     "name": "Landry",
+     "use": "PR",
+     "lon": -97.65029,
+     "lat": 30.71269,
+     "visits": 8,
+     "median_lowest_ft": 629.495114,
+     "to_ground_share": 0.0,
+     "hub_nm": 31.097245
+    }
+   ],
+   "by_distance": [
+    {
+     "lo_nm": 0,
+     "hi_nm": 10,
+     "airports": 1,
+     "visits": 2917,
+     "median_of_medians_ft": 0.0,
+     "to_ground_share": 0.994172
+    },
+    {
+     "lo_nm": 10,
+     "hi_nm": 20,
+     "airports": 2,
+     "visits": 324,
+     "median_of_medians_ft": 27.533155,
+     "to_ground_share": 0.925926
+    },
+    {
+     "lo_nm": 20,
+     "hi_nm": 30,
+     "airports": 5,
+     "visits": 604,
+     "median_of_medians_ft": 34.349925,
+     "to_ground_share": 0.748344
+    },
+    {
+     "lo_nm": 30,
+     "hi_nm": 45,
+     "airports": 1,
+     "visits": 8,
+     "median_of_medians_ft": 629.495114,
+     "to_ground_share": 0.0
+    }
+   ]
+  }
+ },
+ "q3": {
+  "cruise": {
+   "aircraft_hours": 109.3795,
+   "distinct_aircraft": 2353,
+   "average_present": 0.651068,
+   "hours_per_day": 15.625643,
+   "by_class": {
+    "rotorcraft": 17.796597,
+    "light": 56.440089,
+    "small": 7.565289,
+    "large": 25.741833,
+    "unknown": 1.628039,
+    "other": 0.207653
+   },
+   "by_hour_present": [
+    0.138227,
+    0.062356,
+    0.019897,
+    0.034037,
+    0.021125,
+    0.07173,
+    0.116634,
+    0.345899,
+    0.579202,
+    0.782325,
+    0.916741,
+    1.406896,
+    1.394314,
+    1.20869,
+    1.483444,
+    1.185133,
+    1.196354,
+    1.124966,
+    0.82216,
+    0.71217,
+    0.553689,
+    0.569451,
+    0.455942,
+    0.42426
+   ],
+   "weekday_present": 0.781193,
+   "weekend_present": 0.325757
+  },
+  "low": {
+   "aircraft_hours": 327.914881,
+   "distinct_aircraft": 2400,
+   "average_present": 1.951874,
+   "hours_per_day": 46.844983,
+   "by_class": {
+    "rotorcraft": 37.967839,
+    "light": 176.200214,
+    "small": 21.129617,
+    "large": 83.371817,
+    "unknown": 8.455375,
+    "other": 0.790019
+   },
+   "by_hour_present": [
+    0.472446,
+    0.321307,
+    0.1992,
+    0.16041,
+    0.06654,
+    0.249679,
+    0.392557,
+    1.060371,
+    1.915465,
+    2.444566,
+    3.11974,
+    3.801296,
+    3.882288,
+    3.539005,
+    3.870723,
+    3.36562,
+    3.570815,
+    3.26735,
+    2.59382,
+    2.244038,
+    1.586645,
+    1.679629,
+    1.553375,
+    1.488099
+   ],
+   "weekday_present": 2.376618,
+   "weekend_present": 0.890015
+  },
+  "min_distinct_for_a_cell": 3
+ },
+ "q4": {
+  "low_band_hours": 327.914881,
+  "public_runway_3nm": {
+   "hours": 273.08815,
+   "share_of_low": 0.832802,
+   "share_of_remainder": 4.980931,
+   "by_class": {
+    "rotorcraft": 13.721261,
+    "light": 153.945897,
+    "small": 19.401261,
+    "large": 78.658664,
+    "unknown": 6.669164,
+    "other": 0.691903
+   }
+  },
+  "remainder_hours": 54.826731,
+  "remainder_by_class": {
+   "rotorcraft": 24.246578,
+   "light": 22.254317,
+   "small": 1.728356,
+   "large": 4.713153,
+   "unknown": 1.786211,
+   "other": 0.098117
+  },
+  "private_runway_3nm": {
+   "hours": 19.292489,
+   "share_of_low": 0.058834,
+   "share_of_remainder": 0.351881,
+   "by_class": {
+    "rotorcraft": 6.659619,
+    "light": 6.072214,
+    "small": 1.062425,
+    "large": 4.543333,
+    "unknown": 0.944325,
+    "other": 0.010572
+   }
+  },
+  "hospital_1nm": {
+   "hours": 3.488758,
+   "share_of_low": 0.010639,
+   "share_of_remainder": 0.063632,
+   "by_class": {
+    "rotorcraft": 2.75115,
+    "light": 0.597414,
+    "small": 0.014983,
+    "large": 0.010294,
+    "unknown": 0.114917,
+    "other": 0.0
+   }
+  },
+  "other_heliport_1nm": {
+   "hours": 0.790669,
+   "share_of_low": 0.002411,
+   "share_of_remainder": 0.014421,
+   "by_class": {
+    "rotorcraft": 0.519414,
+    "light": 0.20435,
+    "small": 0.001989,
+    "large": 0.0,
+    "unknown": 0.043947,
+    "other": 0.020969
+   }
+  },
+  "elsewhere": {
+   "hours": 31.254814,
+   "share_of_low": 0.095314,
+   "share_of_remainder": 0.570065,
+   "by_class": {
+    "rotorcraft": 14.316394,
+    "light": 15.380339,
+    "small": 0.648958,
+    "large": 0.159525,
+    "unknown": 0.683022,
+    "other": 0.066575
+   }
+  },
+  "class_d_share_of_remainder": 0.096762,
+  "medical_heliports": 13,
+  "heliports": 29,
+  "hotspots": [
+   {
+    "lat": 30.5157,
+    "lon": -97.7771,
+    "cells": [
+     "87489e24bffffff"
+    ],
+    "hours": 0.294769,
+    "minutes_per_day": 2.526595,
+    "aircraft": 15,
+    "by_class": {
+     "light": 0.156119,
+     "rotorcraft": 0.13865
+    },
+    "top_class": "light",
+    "busiest_3h_start": 10,
+    "busiest_3h_share": 0.305785,
+    "nearest_public": {
+     "id": "RYW",
+     "name": "Lago Vista TX/Rusty Allen",
+     "nm": 10.004271,
+     "dir": "E"
+    },
+    "nearest_pad": {
+     "id": "40XS",
+     "name": "Hank Sasser/Breakaway",
+     "nm": 0.227094,
+     "dir": "SE"
+    }
+   },
+   {
+    "lat": 30.3342,
+    "lon": -97.6631,
+    "cells": [
+     "87489e228ffffff"
+    ],
+    "hours": 0.252775,
+    "minutes_per_day": 2.166643,
+    "aircraft": 3,
+    "by_class": {
+     "light": 0.020992,
+     "rotorcraft": 0.231783
+    },
+    "top_class": "rotorcraft",
+    "busiest_3h_start": 10,
+    "busiest_3h_share": 0.459115,
+    "nearest_public": {
+     "id": "EDC",
+     "name": "Austin Executive",
+     "nm": 6.284949,
+     "dir": "SW"
+    },
+    "nearest_pad": {
+     "id": "TE94",
+     "name": "Starflight Facility",
+     "nm": 0.815951,
+     "dir": "N"
+    }
+   },
+   {
+    "lat": 30.0324,
+    "lon": -97.4504,
+    "cells": [
+     "87489e071ffffff"
+    ],
+    "hours": 0.196528,
+    "minutes_per_day": 1.684524,
+    "aircraft": 4,
+    "by_class": {
+     "rotorcraft": 0.196528
+    },
+    "top_class": "rotorcraft",
+    "busiest_3h_start": 15,
+    "busiest_3h_share": 0.846572,
+    "nearest_public": {
+     "id": "AUS",
+     "name": "Austin-Bergstrom Intl",
+     "nm": 14.985525,
+     "dir": "SE"
+    },
+    "nearest_pad": null
+   },
+   {
+    "lat": 30.2938,
+    "lon": -97.7168,
+    "cells": [
+     "87489e351ffffff"
+    ],
+    "hours": 0.172983,
+    "minutes_per_day": 1.482714,
+    "aircraft": 9,
+    "by_class": {
+     "rotorcraft": 0.148003,
+     "light": 0.016583,
+     "unknown": 0.008397
+    },
+    "top_class": "rotorcraft",
+    "busiest_3h_start": 11,
+    "busiest_3h_share": 0.507162,
+    "nearest_public": {
+     "id": "AUS",
+     "name": "Austin-Bergstrom Intl",
+     "nm": 6.427388,
+     "dir": "N"
+    },
+    "nearest_pad": {
+     "id": "3XA6",
+     "name": "Dell Children's Medical Center",
+     "nm": 0.792486,
+     "dir": "SW"
+    }
+   }
+  ]
+ },
+ "q5": {
+  "low_band_hours": 327.914881,
+  "by_link": {
+   "adsb_1090": {
+    "hours": 306.600789,
+    "share": 0.935001
+   },
+   "uat_or_adsr": {
+    "hours": 18.773419,
+    "share": 0.057251
+   },
+   "tisb_only": {
+    "hours": 0.401708,
+    "share": 0.001225
+   },
+   "mlat_only": {
+    "hours": 2.138964,
+    "share": 0.006523
+   }
+  },
+  "aircraft_by_link": {
+   "adsb_1090": 2282,
+   "mlat_only": 19,
+   "tisb_only": 30,
+   "uat_or_adsr": 78
+  },
+  "by_class": {
+   "rotorcraft": {
+    "hours": 37.967839,
+    "adsb_1090": 0.936933,
+    "uat_or_adsr": 0.052407,
+    "tisb_only": 0.0,
+    "mlat_only": 0.01066
+   },
+   "light": {
+    "hours": 176.200214,
+    "adsb_1090": 0.90357,
+    "uat_or_adsr": 0.091926,
+    "tisb_only": 0.0,
+    "mlat_only": 0.004504
+   },
+   "small": {
+    "hours": 21.129617,
+    "adsb_1090": 0.986705,
+    "uat_or_adsr": 0.012951,
+    "tisb_only": 0.0,
+    "mlat_only": 0.000344
+   },
+   "large": {
+    "hours": 83.371817,
+    "adsb_1090": 1.0,
+    "uat_or_adsr": 0.0,
+    "tisb_only": 0.0,
+    "mlat_only": 0.0
+   },
+   "unknown": {
+    "hours": 8.455375,
+    "adsb_1090": 0.805136,
+    "uat_or_adsr": 0.036975,
+    "tisb_only": 0.047509,
+    "mlat_only": 0.110379
+   },
+   "other": {
+    "hours": 0.790019,
+    "adsb_1090": 1.0,
+    "uat_or_adsr": 0.0,
+    "tisb_only": 0.0,
+    "mlat_only": 0.0
+   }
+  },
+  "dual_band_miss_share": 0.007748,
+  "single_band_miss_share": 0.064999,
+  "uat_share": 0.057251,
+  "inside_rule": {
+   "hours": 121.800706,
+   "dual_band_miss_share": 0.003497,
+   "uat_share": 0.006192
+  },
+  "outside_rule": {
+   "hours": 206.114175,
+   "dual_band_miss_share": 0.01026,
+   "uat_share": 0.087424
+  },
+  "other_hours": 0.0,
+  "lower_bound": true
+ },
+ "checks": {
+  "low_class_hours": 327.914881,
+  "low_hours": 327.914881,
+  "low_zone_hours": 327.914881
+ },
+ "sensitivity": {
+  "shift_ft": 100.0,
+  "flip_pp": 0.05,
+  "runs": {
+   "minus": {
+    "cruise_hours": 137.417631,
+    "low_hours": 301.213578,
+    "public_runway_share": 0.844991,
+    "single_band_miss_share": 0.062978,
+    "dual_band_miss_share": 0.008099,
+    "rotorcraft_share_of_cruise": 0.131277
+   },
+   "nominal": {
+    "cruise_hours": 109.3795,
+    "low_hours": 327.914881,
+    "public_runway_share": 0.832802,
+    "single_band_miss_share": 0.064999,
+    "dual_band_miss_share": 0.007748,
+    "rotorcraft_share_of_cruise": 0.162705
+   },
+   "plus": {
+    "cruise_hours": 109.497967,
+    "low_hours": 299.318333,
+    "public_runway_share": 0.787128,
+    "single_band_miss_share": 0.071432,
+    "dual_band_miss_share": 0.008068,
+    "rotorcraft_share_of_cruise": 0.123649
+   }
+  },
+  "inconclusive": []
+ },
+ "excluded_non_crewed_hours": 0.0,
+ "area_sq_mi_projected": 2498.037223,
+ "study": {
+  "name": "Austin Low-Altitude Surveillance Survey",
+  "window": [
+   "2026-09-28",
+   "2026-10-04"
+  ],
+  "timezone": "America/Chicago",
+  "area": {
+   "computed_sq_mi": 2498.140157,
+   "stated_sq_mi": 2498.0,
+   "delta_sq_mi": 0.140157,
+   "delta_pct": 5.6e-05,
+   "within_half_percent": true
+  },
+  "boundary": {
+   "method": "traced",
+   "source": "FAA, Draft Environmental Assessment for Zipline's proposed drone package delivery in multiple Texas metropolitan areas, 11 September 2026, Appendix H (PDF page 194), map scale 1:1,025,400",
+   "note": "Traced from the map in Appendix H of the draft assessment. No coordinates are published.",
+   "corners": [
+    [
+     -98.134311,
+     30.716384
+    ],
+    [
+     -97.746745,
+     30.747555
+    ],
+    [
+     -97.458098,
+     30.713819
+    ],
+    [
+     -97.423834,
+     29.855524
+    ],
+    [
+     -98.136095,
+     29.858212
+    ]
+   ],
+   "map_projection": "Texas Centric Lambert Conformal",
+   "metres_per_pixel": 165.992143,
+   "dots_found": 114,
+   "dots_matched": 94,
+   "residual_rms_m": 107.868577,
+   "residual_max_m": 301.673749,
+   "corner_shift_bootstrap_p95_m": 58.768298,
+   "corner_shift_other_projections_m": 97.871982,
+   "area_if_edges_move_1px_sq_mi": [
+    2477.393317,
+    2518.967943
+   ]
+  },
+  "instrument": "adsb.lol readsb archives, production feed plus mlat-only feed",
+  "replay_date": "2026-09-29",
+  "low_band_ft": [
+   0.0,
+   1200.0
+  ],
+  "cruise_band_ft": [
+   80.0,
+   580.0
+  ],
+  "cruise_ft": 330.0,
+  "enroute_ceiling_ft": 400.0,
+  "runway_buffer_nm": 3.0,
+  "heliport_buffer_nm": 1.0,
+  "site_radius_mi": 10.0,
+  "gap_cap_s": 30.0,
+  "h3_resolution": 7,
+  "classes": [
+   "rotorcraft",
+   "light",
+   "small",
+   "large",
+   "unknown",
+   "other"
+  ],
+  "links": [
+   "adsb_1090",
+   "uat_or_adsr",
+   "tisb_only",
+   "mlat_only"
+  ]
+ },
+ "calibration": {
+  "basis": "hae",
+  "global_hae": {
+   "n": 30304,
+   "mae_ft": 27.190645,
+   "p50_ft": -5.839834,
+   "p90_abs_ft": 55.843696
+  },
+  "global_msl": {
+   "n": 30304,
+   "mae_ft": 88.311758,
+   "p50_ft": -91.5,
+   "p90_abs_ft": 141.5
+  },
+  "chosen": {
+   "n": 30304,
+   "mae_ft": 27.190645,
+   "p50_ft": -5.839834,
+   "p90_abs_ft": 55.843696
+  },
+  "per_aircraft_msl_n": 40,
+  "histogram": [
+   {
+    "lo_ft": -250.0,
+    "n": 40
+   },
+   {
+    "lo_ft": -225.0,
+    "n": 0
+   },
+   {
+    "lo_ft": -200.0,
+    "n": 0
+   },
+   {
+    "lo_ft": -175.0,
+    "n": 0
+   },
+   {
+    "lo_ft": -150.0,
+    "n": 0
+   },
+   {
+    "lo_ft": -125.0,
+    "n": 0
+   },
+   {
+    "lo_ft": -100.0,
+    "n": 363
+   },
+   {
+    "lo_ft": -75.0,
+    "n": 3368
+   },
+   {
+    "lo_ft": -50.0,
+    "n": 3978
+   },
+   {
+    "lo_ft": -25.0,
+    "n": 10312
+   },
+   {
+    "lo_ft": 0.0,
+    "n": 7266
+   },
+   {
+    "lo_ft": 25.0,
+    "n": 3447
+   },
+   {
+    "lo_ft": 50.0,
+    "n": 1326
+   },
+   {
+    "lo_ft": 75.0,
+    "n": 161
+   },
+   {
+    "lo_ft": 100.0,
+    "n": 43
+   },
+   {
+    "lo_ft": 125.0,
+    "n": 0
+   },
+   {
+    "lo_ft": 150.0,
+    "n": 0
+   },
+   {
+    "lo_ft": 175.0,
+    "n": 0
+   },
+   {
+    "lo_ft": 200.0,
+    "n": 0
+   },
+   {
+    "lo_ft": 225.0,
+    "n": 0
+   }
+  ],
+  "runway_matches": 30304,
+  "geoid_model": "GEOID18",
+  "metar_reports": 1807,
+  "points": 2827189,
+  "airborne_points": 2042156,
+  "agl_geometric_share": 0.949597,
+  "agl_geometric_msl_share": 0.010526,
+  "agl_barometric_share": 0.036391,
+  "agl_missing_share": 0.003486,
+  "kept_points": 1878895
+ }
+}

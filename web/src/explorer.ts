@@ -4,6 +4,7 @@ import { GROUPS, groupIndex, type Cell } from "./data";
 import type { Drawer } from "./drawer";
 import { day, el, hourLabel, hourRange, num, pct, perDay, svg } from "./format";
 import { createMap, LINK_CAP, LINK_RAMP, rampCss, TIER_COLORS, TRAFFIC_RAMP, type MapHandle, type MapState, type OverlayName } from "./map";
+import type { Metro } from "./metros";
 import type { Band, ClassGroup, Findings, TrackFile, View } from "./types";
 
 interface Choice<T extends string> {
@@ -42,6 +43,7 @@ export function renderExplorer(
   layers: FeatureCollection,
   findings: Findings,
   replayUrl: string,
+  metro: Metro,
 ): Explorer {
   const days = findings.window.hours / 24;
   const windowSeconds = findings.window.hours * 3600;
@@ -49,7 +51,7 @@ export function renderExplorer(
   const state: MapState = { view: "traffic", band: "cruise", group: "all", from: 0, to: 23 };
 
   const { rail, stage, drawer } = slots;
-  const mapNode = el("div", { class: "map", role: "application", "aria-label": "Map of the Dallas–Fort Worth operating area" });
+  const mapNode = el("div", { class: "map", role: "application", "aria-label": `Map of the ${metro.name} ${metro.traced ? "proposed " : ""}operating area` });
   const legend = el("div", { class: "map-legend" });
   const hint = el("p", { class: "map-hint" }, ["Click the map to see who flies within 10 miles"]);
   const panel = el("div", { class: "brief" });
@@ -75,7 +77,7 @@ export function renderExplorer(
   function pick(lat: number, lon: number): void {
     const brief = buildBrief(lat, lon, cells, places, findings);
     hint.hidden = true;
-    renderBrief(panel, brief, findings, { onAirport: (aLat, aLon) => map.flyTo(aLat, aLon, 11) });
+    renderBrief(panel, brief, findings, metro, { onAirport: (aLat, aLon) => map.flyTo(aLat, aLon, 11) });
     drawer.open({ body: panel, wide: false, label: `Who flies within ${brief.miles} miles of here`, onClose: () => map.clearPin() });
     // After open: opening runs the previous brief's close handler, which clears the old circle.
     map.setPin(lat, lon, brief.miles);
@@ -172,11 +174,17 @@ export function renderExplorer(
   hourChart.addEventListener("pointerup", () => (anchor = null));
   hourChart.addEventListener("dblclick", () => reset.click());
 
+  // Name only the airspace this metro has: Dallas–Fort Worth has a Mode C veil and Class B, Austin has Class C.
+  const hasLayer = (name: string) => layers.features.some((feature) => feature.properties?.layer === name);
+  const hasVeil = hasLayer("veil");
+  const classes = ["B", "C", "D"].filter((name) => hasLayer(`class_${name.toLowerCase()}`));
+  const classList = (last: string) => (classes.length > 1 ? `${classes.slice(0, -1).join(", ")}${last}${classes[classes.length - 1]}` : classes.join(""));
+  const airspaceLabel = [hasVeil ? "Mode C veil" : "", classes.length ? `Class ${classList(hasVeil ? ", " : " and ")}` : ""].filter(Boolean).join(" and ");
   const overlayField = el("fieldset", { class: "checks" }, [el("legend", {}, ["Draw on the map"])]);
   const overlays: [OverlayName, string, boolean][] = [
     ["standoff", "Runway stand-off in Zipline's exemption", true],
     ["facilities", "Airports and heliports", false],
-    ["airspace", "Mode C veil and Class B, D", false],
+    ["airspace", airspaceLabel || "Controlled airspace", false],
     ["busy", "Busiest spots away from runways", false],
   ];
   const overlayInputs = new Map<OverlayName, HTMLInputElement>();
@@ -344,9 +352,13 @@ export function renderExplorer(
         el("ul", { class: "legend-list" }, [swatch("rgb(222,227,224)", "Fewer than 3 aircraft")]),
       );
     }
-    const lines = el("ul", { class: "legend-list lines" }, [el("li", {}, [el("i", { class: "line area" }), "Area in Zipline's FAA assessment"])]);
+    const areaLabel = metro.traced ? "Area in the FAA's draft assessment, traced" : "Area in Zipline's FAA assessment";
+    const lines = el("ul", { class: "legend-list lines" }, [el("li", {}, [el("i", { class: "line area" }), areaLabel])]);
     if (overlayInputs.get("standoff")?.checked) lines.append(el("li", {}, [el("i", { class: "line standoff" }), "3 NM from a public-use runway"]));
-    if (overlayInputs.get("airspace")?.checked) lines.append(el("li", {}, [el("i", { class: "line veil" }), "Mode C veil"]), el("li", {}, [el("i", { class: "line classb" }), "Class B and D surface areas"]));
+    if (overlayInputs.get("airspace")?.checked) {
+      if (hasVeil) lines.append(el("li", {}, [el("i", { class: "line veil" }), "Mode C veil"]));
+      if (classes.length) lines.append(el("li", {}, [el("i", { class: "line classb" }), `Class ${classList(" and ")} surface areas`]));
+    }
     if (overlayInputs.get("busy")?.checked) lines.append(el("li", {}, [el("i", { class: "line busy" }), "Busiest areas off-airport"]));
     if (overlayInputs.get("facilities")?.checked) lines.append(el("li", {}, [el("i", { class: "dot public" }), "Public airport"]), el("li", {}, [el("i", { class: "dot private" }), "Private airport or heliport"]), el("li", {}, [el("i", { class: "dot medical" }), "Medical heliport"]));
     legend.append(lines);
@@ -376,7 +388,7 @@ export function renderExplorer(
       const who = state.group === "all" ? "crewed aircraft" : state.group === "rotorcraft" ? "helicopters" : state.group === "light" ? "light aircraft" : "larger aircraft";
       const band = state.band === "cruise" ? "near Zipline's 330 ft cruise height (80–580 ft)" : "below 1,200 ft";
       const when = hours === 24 ? "at a typical moment" : `between ${hourRange(state.from, state.to + 1)}`;
-      summary.append(el("span", { class: "num" }, [num(present, present < 10 ? 1 : 0)]), ` ${who} ${band} ${when}, across Zipline's Dallas–Fort Worth delivery area.`);
+      summary.append(el("span", { class: "num" }, [num(present, present < 10 ? 1 : 0)]), ` ${who} ${band} ${when}, across ${metro.traced ? `the proposed ${metro.name} area` : `Zipline's ${metro.name} delivery area`}.`);
     } else if (state.view === "reception") {
       summary.append(el("span", { class: "num" }, [pct(findings.q2.heard_cruise_share)]), " of the area is where public tracking was shown to hear aircraft at drone height. Pale areas are unproven, not empty.");
     } else {
