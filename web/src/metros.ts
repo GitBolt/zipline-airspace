@@ -38,19 +38,24 @@ export const METROS: Metro[] = [
 
 const SKIP_WELCOME = "airwatch-switched";
 
-/** The metro named by ?metro= or by the hash (#austin). Dallas–Fort Worth otherwise. */
-export function metroFromUrl(): Metro {
+/** The metro named by ?metro= or by the hash (#austin). Null means the overview of every metro. */
+export function metroFromUrl(): Metro | null {
   const params = new URLSearchParams(window.location.search);
   const wanted = (params.get("metro") ?? window.location.hash.slice(1)).toLowerCase();
-  return METROS.find((metro) => metro.key === wanted) ?? METROS[0];
+  return METROS.find((metro) => metro.key === wanted) ?? null;
 }
 
-/** A link to `metro` on this page. Dallas–Fort Worth keeps the plain address. */
+/** A link to `metro` on this page. */
 export function metroHref(metro: Metro): string {
-  return metro.key === METROS[0].key ? window.location.pathname : `${window.location.pathname}?metro=${metro.key}`;
+  return `${window.location.pathname}?metro=${metro.key}`;
 }
 
-/** Remember that the reader used the switch, so the next page skips the welcome card. */
+/** A link to the overview, which picks no metro. */
+export function overviewHref(): string {
+  return window.location.pathname;
+}
+
+/** Remember that the reader picked a metro on the page, so the next page skips the welcome card. */
 export function markSwitch(): void {
   try {
     window.sessionStorage.setItem(SKIP_WELCOME, "1");

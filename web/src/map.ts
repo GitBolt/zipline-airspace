@@ -9,7 +9,7 @@ import { feet, pct, perDay } from "./format";
 import { hideTip, showTip } from "./tip";
 import type { Findings, TrackFile, View } from "./types";
 
-const STYLE = "https://tiles.openfreemap.org/styles/positron";
+export const STYLE = "https://tiles.openfreemap.org/styles/positron";
 type RGB = [number, number, number];
 type RGBA = [number, number, number, number];
 
